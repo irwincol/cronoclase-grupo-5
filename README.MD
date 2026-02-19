@@ -6,7 +6,7 @@ Plataforma interactiva para la gestión visual de hitos académicos y seguimient
 
 - **Descripción del problema:** La desarticulación entre el pacto pedagógico y el seguimiento diario genera confusión en los estudiantes sobre los plazos y una carga administrativa excesiva para los docentes al gestionar entregas.
 - **Justificación:** Es relevante porque centraliza la planificación educativa en una herramienta visual, mejorando la organización del tiempo, reduciendo el incumplimiento de entregas y permitiendo un control transparente del avance académico.
-- **Dominio:** Gestión de procesos educativos y seguimiento de cronogramas académicos.
+- **Dominio:** Gestión de procesos educativos y seguimiento de cronogramas academicos.
 
 ## Objetivos
 
