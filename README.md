@@ -34,7 +34,7 @@ Plataforma interactiva para la gestión visual de hitos académicos y seguimient
 - **Backend**: Spring Boot 3.x, Java 17/21, Spring Data JPA.
 - **Frontend**: React.
 - **Base de datos**: PostgreSQL.
-- **Otras herramientas**: Git, GitHub, Postman, Swagger, Docker.
+- **Otras herramientas**: Lombok, Spring Boot DevTools, Git, GitHub, Postman, Swagger, Docker.
 
 ## Integrantes del Equipo
 
