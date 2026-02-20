@@ -49,6 +49,8 @@ Plataforma interactiva para la gestión visual de hitos académicos y seguimient
 
 ## Diagrama de Clases del Dominio (v1)
 
+El diagrama de dominio muestra las entidades principales del sistema (por ejemplo, Usuario, Docente, Estudiante, Actividad, Hito, Entrega) y las relaciones entre ellas. Es una vista conceptual que ayuda a entender el modelo antes de entrar a la implementacion tecnica.
+
 ![Diagrama de Dominio v1](docs/diagrama-dominio-v1.png) 
 *Diagrama inicial del modelo de dominio – versión 1. Se actualizará en futuras entregas.*
 
