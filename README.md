@@ -64,7 +64,7 @@ El diagrama de dominio muestra las entidades principales del sistema (por ejempl
 ### Pasos para la Instalación
 1. Clona este repositorio en tu máquina local:
    ```bash
-   git clone [URL-del-repositorio]
+   git clone [https://github.com/irwincol/cronoclase-grupo-5.git]
    ```
 2. Navega al directorio del proyecto:
    ```bash
