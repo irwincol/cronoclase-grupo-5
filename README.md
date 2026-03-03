@@ -73,7 +73,15 @@
 ## Diagrama de Clases del Dominio (v1)
 ![Diagrama de Dominio v1](docs/diagrama-grupo-5.png)
 
-El diagrama de dominio muestra las entidades principales del sistema (por ejemplo, Usuario, Docente, Estudiante, Actividad, Hito, Entrega) y las relaciones entre ellas. Es una vista conceptual que ayuda a entender el modelo antes de entrar a la implementacion tecnica.
+El diagrama de dominio muestra las entidades principales del sistema, incluyendo:
+- **Usuario**: Representa a los usuarios generales del sistema.
+- **Docente**: Encargado de gestionar hitos, actividades y evaluaciones.
+- **Estudiante**: Participa en las actividades y realiza entregas.
+- **Actividad**: Tareas o evaluaciones asignadas a los estudiantes.
+- **Hito**: Eventos clave en el cronograma académico.
+- **Entrega**: Representa los trabajos enviados por los estudiantes para una actividad específica.
+
+Estas entidades están relacionadas entre sí para reflejar las interacciones y flujos de información dentro del sistema, proporcionando una base sólida para la implementación técnica.
 
 
 ## Instrucciones de Instalación y Ejecución para desarrolladores
