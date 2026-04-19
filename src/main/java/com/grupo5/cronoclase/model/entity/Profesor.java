@@ -11,6 +11,8 @@ import lombok.Builder;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -28,11 +30,12 @@ public class Profesor extends BaseEntity {
     @Column(unique = true, nullable = false)
     private String email;
 
-    @Column(nullable = false)
-    @Builder.Default
-    private boolean activo = true;
+    @Column(nullable = true)
+   
+    private Boolean activo;
 
     @OneToMany(mappedBy = "profesor")
+    @JsonIgnore //Esto se puso para evitar el retorno infinito en el GET
     private List<Grupo> grupos;
 
 }

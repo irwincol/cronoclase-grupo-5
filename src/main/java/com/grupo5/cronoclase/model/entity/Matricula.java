@@ -1,5 +1,7 @@
 package com.grupo5.cronoclase.model.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.grupo5.cronoclase.model.enums.*;
 
 import jakarta.persistence.*;
@@ -30,6 +32,6 @@ public class Matricula extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "grupo_id", nullable = false)
-    private Grupo grupo;
+     private Grupo grupo;
 
 }

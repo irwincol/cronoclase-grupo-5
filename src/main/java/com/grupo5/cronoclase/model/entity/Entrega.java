@@ -27,6 +27,7 @@ public class Entrega extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    //PONER ESTO EN PENDIENTE POR DEFAULT
     private EstadoEntrega estado;
 
     @Column(length = 300)

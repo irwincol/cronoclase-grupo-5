@@ -3,6 +3,8 @@ package com.grupo5.cronoclase.model.entity;
 import com.grupo5.cronoclase.model.enums.*;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import java.util.List;
 
@@ -40,14 +42,18 @@ public class Grupo extends BaseEntity {
     @JsonBackReference
     private Curso curso;
 
+    
     @OneToMany(mappedBy = "grupo", cascade = CascadeType.ALL)
+    @JsonIgnore //Esto se puso para evitar el retorno infinito en el GET
     private List<Matricula> matriculas;
 
     @OneToMany(mappedBy = "grupo", cascade = CascadeType.ALL)
+    @JsonIgnore //Esto se puso para evitar el retorno infinito en el GET
     private List<Evaluacion> evaluaciones;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "profesor_id", nullable = false)
+    @JsonIgnoreProperties({ "grupos", "hibernateLazyInitializer", "handler" }) // Esto evita el bucle y el error de Lazy
     private Profesor profesor;
 
 }

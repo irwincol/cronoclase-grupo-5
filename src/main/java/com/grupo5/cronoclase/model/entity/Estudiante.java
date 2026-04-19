@@ -9,6 +9,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -25,10 +27,15 @@ public class Estudiante extends BaseEntity {
     @Column(unique = true, nullable = false)
     private String email;
 
+    @Column(unique = true, nullable = false)
+    private String documentoID;
+
     @OneToMany(mappedBy = "estudiante", cascade = CascadeType.ALL)
+    @JsonIgnore //Esto se puso para evitar el retorno infinito en el GET
     private List<Matricula> matriculas;
 
     @OneToMany(mappedBy = "estudiante", cascade = CascadeType.ALL)
+    @JsonIgnore //Esto se puso para evitar el retorno infinito en el GET
     private List<Entrega> entregas;
 
 }
