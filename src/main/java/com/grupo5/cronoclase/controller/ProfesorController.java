@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.*;
@@ -49,13 +51,21 @@ public class ProfesorController {
     }
 
     @GetMapping("/{profesorID}")
-
-    public Profesor obtenerPorId(Long profesorID) {
-
+    public Profesor obtenerPorId(@PathVariable Long profesorID) {
         return profesorService.obtenerPorId(profesorID);
-
     }
 
+    // 5. Actualizar un profesor por ID
+    @PutMapping("/{id}")
+    public Profesor actualizarProfesor(@PathVariable Long id, @RequestBody Profesor profesor) {
+        return profesorService.actualizarProfesor(id, profesor);
+    }
+
+    // 6. Eliminar un profesor por ID
+    @DeleteMapping("/{id}")
+    public void eliminarProfesor(@PathVariable Long id) {
+        profesorService.eliminarProfesor(id);
+    }
 
 
 

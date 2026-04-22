@@ -40,7 +40,6 @@ public class Evaluacion extends BaseEntity {
     @JoinColumn(name = "grupo_id", nullable = false)
     private Grupo grupo;
 
-
     @OneToMany(mappedBy = "evaluacion", cascade = CascadeType.ALL)
     private List<Entrega> entregas;
 

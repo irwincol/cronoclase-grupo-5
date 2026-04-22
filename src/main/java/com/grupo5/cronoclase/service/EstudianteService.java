@@ -18,8 +18,8 @@ public class EstudianteService {
     // Servicio para crear un solo estudiante
 
     public Estudiante crearEstudiante(Estudiante estudiante) {
+        estudiante.setId(null); // Ignoramos cualquier id del body para forzar INSERT
         return estudianteRepository.save(estudiante);
-
     }
 
     // Servicio para crear varios estudiantes de una sola vez

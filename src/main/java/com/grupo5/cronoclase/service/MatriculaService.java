@@ -2,6 +2,7 @@ package com.grupo5.cronoclase.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import com.grupo5.cronoclase.repository.*;
 import com.grupo5.cronoclase.model.entity.*;
 
@@ -16,6 +17,7 @@ public class MatriculaService {
 
     // 1. Crear una sola matrícula
     public Matricula crearMatricula(Matricula matricula) {
+        matricula.setId(null); // Ignoramos cualquier id del body para forzar INSERT
         return matriculaRepository.save(matricula);
     }
 
@@ -47,7 +49,28 @@ public class MatriculaService {
     }
 
 
+    // --- ACTUALIZAR MATRÍCULA ---
+    @Transactional
+    public Matricula actualizarMatricula(Long id, Matricula datosNuevos) {
+        // 1. Buscamos la matrícula actual (si no existe, lanza el error ya programado)
+        Matricula matriculaExistente = obtenerPorId(id);
 
-    
+        // 2. Seteamos los nuevos datos
+        matriculaExistente.setEstadoMatricula(datosNuevos.getEstadoMatricula());
+        matriculaExistente.setEstudiante(datosNuevos.getEstudiante());
+        matriculaExistente.setGrupo(datosNuevos.getGrupo());
+
+        // 3. Guardamos (JPA hace el UPDATE automáticamente)
+        return matriculaRepository.save(matriculaExistente);
+    }
+
+    // --- ELIMINAR MATRÍCULA ---
+    @Transactional
+    public void eliminarMatricula(Long id) {
+        // Validamos que existe antes de intentar borrar
+        obtenerPorId(id);
+
+        matriculaRepository.deleteById(id);
+    }
 
 }

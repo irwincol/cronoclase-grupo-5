@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.*;
@@ -59,6 +61,18 @@ public class MatriculaController {
     @GetMapping("/estudiante/{estudianteId}")
     public List<Matricula> obtenerPorEstudiante(@PathVariable Long estudianteId) {
         return matriculaService.obtenerPorEstudiante(estudianteId);
+    }
+
+    // 7. Actualizar una matrícula por ID
+    @PutMapping("/{id}")
+    public Matricula actualizarMatricula(@PathVariable Long id, @RequestBody Matricula matricula) {
+        return matriculaService.actualizarMatricula(id, matricula);
+    }
+
+    // 8. Eliminar una matrícula por ID
+    @DeleteMapping("/{id}")
+    public void eliminarMatricula(@PathVariable Long id) {
+        matriculaService.eliminarMatricula(id);
     }
 
 

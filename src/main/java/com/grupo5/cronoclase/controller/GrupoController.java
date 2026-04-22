@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.*;
@@ -57,7 +59,15 @@ public class GrupoController {
     }
 
 
+    @PutMapping("/{id}")
+    public Grupo actualizarGrupo(@PathVariable Long id, @RequestBody Grupo grupo) {
+        return grupoService.actualizarGrupo(id, grupo);
+    }
 
+    @DeleteMapping("/{id}")
+    public void eliminarGrupo(@PathVariable Long id) {
+        grupoService.eliminarGrupo(id);
+    }
 
 
 

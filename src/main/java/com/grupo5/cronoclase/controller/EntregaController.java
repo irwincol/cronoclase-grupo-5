@@ -18,7 +18,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.http.ResponseEntity;
 
 import java.util.*;
 
@@ -75,6 +77,19 @@ public class EntregaController {
     @PutMapping("/{id}")
     public Entrega actualizarEntrega(@PathVariable Long id, @RequestBody Entrega entrega) {
         return entregaService.actualizarEntrega(id, entrega);
+    }
+
+    // Endpoint para marcar una entrega como CALIFICADO (PATCH)
+    @PatchMapping("/{id}/calificar")
+    public Entrega calificarEntrega(@PathVariable Long id) {
+        return entregaService.calificarEntrega(id);
+    }
+
+    // Endpoint para recalcular el estado de todas las entregas PENDIENTES (PUT)
+    @PutMapping("/actualizar-estados")
+    public ResponseEntity<String> actualizarEstadosTodas() {
+        entregaService.actualizarEstadosTodas();
+        return ResponseEntity.ok("Estados actualizados correctamente.");
     }
 
     // Endpoint para eliminar una entrega (DELETE)

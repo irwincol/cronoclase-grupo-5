@@ -18,8 +18,8 @@ public class CursoService {
     // Servicio para crear un solo curso
 
     public Curso crearEstudiante(Curso curso) {
+        curso.setId(null); // Ignoramos cualquier id del body para forzar INSERT
         return cursoRepository.save(curso);
-
     }
 
     // Servicio para crear varios cursos de una sola vez

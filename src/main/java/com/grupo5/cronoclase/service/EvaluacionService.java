@@ -18,6 +18,7 @@ public class EvaluacionService {
 
 
     public Evaluacion crearEvaluacion(Evaluacion evaluacion) {
+        evaluacion.setId(null); // Ignoramos cualquier id del body para forzar INSERT
         return evaluacionRepository.save(evaluacion);
     }
 
