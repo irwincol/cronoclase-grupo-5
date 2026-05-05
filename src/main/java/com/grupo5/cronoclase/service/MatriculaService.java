@@ -5,72 +5,120 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.grupo5.cronoclase.repository.*;
 import com.grupo5.cronoclase.model.entity.*;
+import com.grupo5.cronoclase.dto.*;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
-
 public class MatriculaService {
 
     @Autowired
     private MatriculaRepository matriculaRepository;
 
-    // 1. Crear una sola matrícula
-    public Matricula crearMatricula(Matricula matricula) {
-        matricula.setId(null); // Ignoramos cualquier id del body para forzar INSERT
-        return matriculaRepository.save(matricula);
+    @Autowired
+    private EstudianteRepository estudianteRepository;
+
+    @Autowired
+    private GrupoRepository grupoRepository;
+
+    public MatriculaDTO convertirADTO(Matricula matricula) {
+        return new MatriculaDTO(
+            matricula.getId(),
+            matricula.getEstadoMatricula(),
+            matricula.getEstudiante() != null ? matricula.getEstudiante().getNombre() : null,
+            matricula.getGrupo() != null ? matricula.getGrupo().getNombre() : null
+        );
     }
 
-    // 2. Crear varias matrículas al tiempo (POST masivo)
-    public List<Matricula> crearVariasMatriculas(List<Matricula> matriculas) {
-        return matriculaRepository.saveAll(matriculas);
+    public Matricula convertirAEntidad(MatriculaCreateDTO dto) {
+        Matricula matricula = new Matricula();
+        matricula.setEstadoMatricula(dto.estadoMatricula());
+        
+        if (dto.estudianteId() != null) {
+            Estudiante estudiante = estudianteRepository.findById(dto.estudianteId())
+                .orElseThrow(() -> new RuntimeException("Estudiante no encontrado con ID: " + dto.estudianteId()));
+            matricula.setEstudiante(estudiante);
+        }
+        
+        if (dto.grupoId() != null) {
+            Grupo grupo = grupoRepository.findById(dto.grupoId())
+                .orElseThrow(() -> new RuntimeException("Grupo no encontrado con ID: " + dto.grupoId()));
+            matricula.setGrupo(grupo);
+        }
+        
+        return matricula;
     }
 
-
-    // 3. Consultar todas las matrículas
-    public List<Matricula> obtenerTodas() {
-        return matriculaRepository.findAll();
+    @Transactional
+    public MatriculaDTO crearMatricula(MatriculaCreateDTO dto) {
+        Matricula matricula = convertirAEntidad(dto);
+        matricula.setId(null);
+        Matricula guardada = matriculaRepository.save(matricula);
+        return convertirADTO(guardada);
     }
 
-    // 4. Consultar por ID de Matrícula
-    public Matricula obtenerPorId(Long id) {
+    @Transactional
+    public List<MatriculaDTO> crearVariasMatriculas(List<MatriculaCreateDTO> dtos) {
+        List<Matricula> matriculas = dtos.stream()
+            .map(this::convertirAEntidad)
+            .collect(Collectors.toList());
+        List<Matricula> guardadas = matriculaRepository.saveAll(matriculas);
+        return guardadas.stream().map(this::convertirADTO).collect(Collectors.toList());
+    }
+
+    public List<MatriculaDTO> obtenerTodas() {
+        return matriculaRepository.findAll().stream()
+            .map(this::convertirADTO)
+            .collect(Collectors.toList());
+    }
+
+    private Matricula buscarEntidadPorId(Long id) {
         return matriculaRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Matrícula no encontrada con ID: " + id));
     }
 
-    // 5. Consultar todas las matrículas de un Grupo específico
-    public List<Matricula> obtenerPorGrupo(Long grupoId) {
-        return matriculaRepository.findByGrupoId(grupoId);
+    public MatriculaDTO obtenerPorId(Long id) {
+        return convertirADTO(buscarEntidadPorId(id));
     }
 
-    // 6. Consultar todas las matrículas de un Estudiante específico
-    public List<Matricula> obtenerPorEstudiante(Long estudianteId) {
-        return matriculaRepository.findByEstudianteId(estudianteId);
+    public List<MatriculaDTO> obtenerPorGrupo(Long grupoId) {
+        return matriculaRepository.findByGrupoId(grupoId).stream()
+            .map(this::convertirADTO)
+            .collect(Collectors.toList());
     }
 
+    public List<MatriculaDTO> obtenerPorEstudiante(Long estudianteId) {
+        return matriculaRepository.findByEstudianteId(estudianteId).stream()
+            .map(this::convertirADTO)
+            .collect(Collectors.toList());
+    }
 
-    // --- ACTUALIZAR MATRÍCULA ---
     @Transactional
-    public Matricula actualizarMatricula(Long id, Matricula datosNuevos) {
-        // 1. Buscamos la matrícula actual (si no existe, lanza el error ya programado)
-        Matricula matriculaExistente = obtenerPorId(id);
+    public MatriculaDTO actualizarMatricula(Long id, MatriculaCreateDTO datosNuevos) {
+        Matricula matriculaExistente = buscarEntidadPorId(id);
 
-        // 2. Seteamos los nuevos datos
-        matriculaExistente.setEstadoMatricula(datosNuevos.getEstadoMatricula());
-        matriculaExistente.setEstudiante(datosNuevos.getEstudiante());
-        matriculaExistente.setGrupo(datosNuevos.getGrupo());
+        matriculaExistente.setEstadoMatricula(datosNuevos.estadoMatricula());
+        
+        if (datosNuevos.estudianteId() != null) {
+            Estudiante estudiante = estudianteRepository.findById(datosNuevos.estudianteId())
+                .orElseThrow(() -> new RuntimeException("Estudiante no encontrado con ID: " + datosNuevos.estudianteId()));
+            matriculaExistente.setEstudiante(estudiante);
+        }
+        
+        if (datosNuevos.grupoId() != null) {
+            Grupo grupo = grupoRepository.findById(datosNuevos.grupoId())
+                .orElseThrow(() -> new RuntimeException("Grupo no encontrado con ID: " + datosNuevos.grupoId()));
+            matriculaExistente.setGrupo(grupo);
+        }
 
-        // 3. Guardamos (JPA hace el UPDATE automáticamente)
-        return matriculaRepository.save(matriculaExistente);
+        Matricula actualizada = matriculaRepository.save(matriculaExistente);
+        return convertirADTO(actualizada);
     }
 
-    // --- ELIMINAR MATRÍCULA ---
     @Transactional
     public void eliminarMatricula(Long id) {
-        // Validamos que existe antes de intentar borrar
-        obtenerPorId(id);
-
+        buscarEntidadPorId(id);
         matriculaRepository.deleteById(id);
     }
-
 }

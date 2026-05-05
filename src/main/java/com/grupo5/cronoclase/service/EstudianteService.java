@@ -4,101 +4,96 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.grupo5.cronoclase.repository.*;
 import com.grupo5.cronoclase.model.entity.*;
+import com.grupo5.cronoclase.dto.*;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
-
 public class EstudianteService {
 
     @Autowired
     private EstudianteRepository estudianteRepository;
 
-    // Servicio para crear un solo estudiante
-
-    public Estudiante crearEstudiante(Estudiante estudiante) {
-        estudiante.setId(null); // Ignoramos cualquier id del body para forzar INSERT
-        return estudianteRepository.save(estudiante);
+    public EstudianteDTO convertirADTO(Estudiante estudiante) {
+        return new EstudianteDTO(
+            estudiante.getId(),
+            estudiante.getNombre(),
+            estudiante.getEmail()
+        );
     }
 
-    // Servicio para crear varios estudiantes de una sola vez
-
-    public List<Estudiante> crearVariosEstudiantes(List<Estudiante> estudiantes) {
-        // Usamos el método que ya existe en el repositorio por herencia
-        return estudianteRepository.saveAll(estudiantes);
+    public Estudiante convertirAEntidad(EstudianteCreateDTO dto) {
+        Estudiante estudiante = new Estudiante();
+        estudiante.setNombre(dto.nombre());
+        estudiante.setEmail(dto.email());
+        estudiante.setDocumentoID(dto.documentoID());
+        return estudiante;
     }
 
-    // servicio para obtener todos los estudiantes
-
-    public List<Estudiante> obtenerEstudiantes() {
-        return estudianteRepository.findAll();
+    @Transactional
+    public EstudianteDTO crearEstudiante(EstudianteCreateDTO dto) {
+        Estudiante estudiante = convertirAEntidad(dto);
+        estudiante.setId(null);
+        Estudiante guardado = estudianteRepository.save(estudiante);
+        return convertirADTO(guardado);
     }
 
-    // Servicio para encotrar un estudiante por su documento de identidad
+    @Transactional
+    public List<EstudianteDTO> crearVariosEstudiantes(List<EstudianteCreateDTO> dtos) {
+        List<Estudiante> estudiantes = dtos.stream()
+            .map(this::convertirAEntidad)
+            .collect(Collectors.toList());
+        List<Estudiante> guardados = estudianteRepository.saveAll(estudiantes);
+        return guardados.stream().map(this::convertirADTO).collect(Collectors.toList());
+    }
 
-    public Estudiante findEstudianteByDocumento(String documentoID) {
+    public List<EstudianteDTO> obtenerEstudiantes() {
+        return estudianteRepository.findAll().stream()
+            .map(this::convertirADTO)
+            .collect(Collectors.toList());
+    }
 
-        // El optional puede o no tene run estudiante. lo que se devuelve es el
-        // estudiante que este dentro
-        // del optional, de lo contrario se tira la excepcion.
-        // como el optional es un contenedor, por eso necesita los metodos, el .get() y
-        // el .isPresent
-
+    public EstudianteDTO findEstudianteByDocumento(String documentoID) {
         Optional<Estudiante> estudianteEncontrado = estudianteRepository.findByDocumentoID(documentoID);
-
         if (estudianteEncontrado.isPresent()) {
-
-            return estudianteEncontrado.get();
-        }
-
-        else {
+            return convertirADTO(estudianteEncontrado.get());
+        } else {
             throw new RuntimeException("Estudiante no encontrado, verifique ID ingresado");
         }
-
     }
 
-    public List<Estudiante> findEstudianteByNombre(String nombreEstudiante) {
-
-        return estudianteRepository.findByNombreContainingIgnoreCase(nombreEstudiante);
-
+    public List<EstudianteDTO> findEstudianteByNombre(String nombreEstudiante) {
+        return estudianteRepository.findByNombreContainingIgnoreCase(nombreEstudiante).stream()
+            .map(this::convertirADTO)
+            .collect(Collectors.toList());
     }
 
-    public Estudiante obtenerPorId(Long id) {
-        // De esta forma se busca un estudiante por su ID. y se lanza un mensaje de
-        // error en
-        // caso de que no se encuentre
+    private Estudiante buscarEntidadPorId(Long id) {
         return estudianteRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Profesor no encontrado con ID: " + id));
+                .orElseThrow(() -> new RuntimeException("Estudiante no encontrado con ID: " + id));
     }
 
-    // --- ACTUALIZAR ESTUDIANTE ---
+    public EstudianteDTO obtenerPorId(Long id) {
+        return convertirADTO(buscarEntidadPorId(id));
+    }
+
     @Transactional
-    public Estudiante actualizarEstudiante(Long id, Estudiante datosNuevos) {
-        // 1. Buscamos al estudiante actual (si no existe, lanza el error que ya
-        // programaste)
-        Estudiante estudianteExistente = obtenerPorId(id);
+    public EstudianteDTO actualizarEstudiante(Long id, EstudianteCreateDTO datosNuevos) {
+        Estudiante estudianteExistente = buscarEntidadPorId(id);
 
-        // 2. Seteamos los nuevos datos
-        estudianteExistente.setNombre(datosNuevos.getNombre());
-        estudianteExistente.setEmail(datosNuevos.getEmail());
-        estudianteExistente.setDocumentoID(datosNuevos.getDocumentoID());
+        estudianteExistente.setNombre(datosNuevos.nombre());
+        estudianteExistente.setEmail(datosNuevos.email());
+        estudianteExistente.setDocumentoID(datosNuevos.documentoID());
 
-        // 3. Guardamos (JPA hace el UPDATE automáticamente)
-        return estudianteRepository.save(estudianteExistente);
+        Estudiante actualizado = estudianteRepository.save(estudianteExistente);
+        return convertirADTO(actualizado);
     }
 
-
-
-    // --- ELIMINAR ESTUDIANTE ---
     @Transactional
     public void eliminarEstudiante(Long id) {
-        // Validamos que existe antes de intentar borrar
-        obtenerPorId(id);
-        
-        // Al ejecutar esto, por el CascadeType.ALL que tienes en la Entidad,
-        // se borrarán también sus MATRICULAS y sus ENTREGAS.
+        buscarEntidadPorId(id);
         estudianteRepository.deleteById(id);
     }
-
 }

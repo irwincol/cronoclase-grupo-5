@@ -1,72 +1,68 @@
 package com.grupo5.cronoclase.controller;
 
 import org.springframework.web.bind.annotation.RestController;
-
-import com.grupo5.cronoclase.model.entity.*;
-import com.grupo5.cronoclase.service.*;
-
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpStatus;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
-import java.util.*;
+import com.grupo5.cronoclase.dto.ProfesorDTO;
+import com.grupo5.cronoclase.dto.ProfesorCreateDTO;
+import com.grupo5.cronoclase.service.ProfesorService;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/profesor")
-
+@Tag(name = "Profesor", description = "Gestión de profesores")
 public class ProfesorController {
 
     @Autowired
     private ProfesorService profesorService;
 
+    @Operation(summary = "Crear un profesor")
     @PostMapping
-    public Profesor crearProfesor(@RequestBody Profesor profesor) {
+    @ResponseStatus(HttpStatus.CREATED)
+    public ProfesorDTO crearProfesor(@RequestBody ProfesorCreateDTO profesor) {
         return profesorService.crearProfesor(profesor);
     }
 
+    @Operation(summary = "Crear varios profesores")
     @PostMapping("/crearVarios")
-    List<Profesor> crearVariosProfesores(@RequestBody List<Profesor>  listaProfesores) {
+    @ResponseStatus(HttpStatus.CREATED)
+    public List<ProfesorDTO> crearVariosProfesores(@RequestBody List<ProfesorCreateDTO> listaProfesores) {
         return profesorService.crearVariosProfesores(listaProfesores);
-
     }
-
-
     
+    @Operation(summary = "Obtener todos los profesores")
     @GetMapping
-    public List<Profesor>  obtenerProfesores() {
+    public List<ProfesorDTO> obtenerProfesores() {
         return profesorService.obtenerProfesores();
     }
 
-
+    @Operation(summary = "Buscar profesores por nombre")
     @GetMapping("/buscar/{nombreProfesor}")
-    public List<Profesor> findProfesorByNombre(@PathVariable String nombreProfesor) {
-
+    public List<ProfesorDTO> findProfesorByNombre(@PathVariable String nombreProfesor) {
         return profesorService.findProfesorByNombre(nombreProfesor);
-
     }
 
+    @Operation(summary = "Obtener un profesor por ID")
     @GetMapping("/{profesorID}")
-    public Profesor obtenerPorId(@PathVariable Long profesorID) {
+    public ProfesorDTO obtenerPorId(@PathVariable Long profesorID) {
         return profesorService.obtenerPorId(profesorID);
     }
 
-    // 5. Actualizar un profesor por ID
+    @Operation(summary = "Actualizar un profesor")
     @PutMapping("/{id}")
-    public Profesor actualizarProfesor(@PathVariable Long id, @RequestBody Profesor profesor) {
+    public ProfesorDTO actualizarProfesor(@PathVariable Long id, @RequestBody ProfesorCreateDTO profesor) {
         return profesorService.actualizarProfesor(id, profesor);
     }
 
-    // 6. Eliminar un profesor por ID
+    @Operation(summary = "Eliminar un profesor")
     @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void eliminarProfesor(@PathVariable Long id) {
         profesorService.eliminarProfesor(id);
     }
-
-
-
 }

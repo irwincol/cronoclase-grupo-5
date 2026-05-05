@@ -1,78 +1,74 @@
 package com.grupo5.cronoclase.controller;
 
 import org.springframework.web.bind.annotation.RestController;
-
-import com.grupo5.cronoclase.model.entity.*;
-import com.grupo5.cronoclase.service.*;
-
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpStatus;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
-import java.util.*;
+import com.grupo5.cronoclase.dto.EstudianteDTO;
+import com.grupo5.cronoclase.dto.EstudianteCreateDTO;
+import com.grupo5.cronoclase.service.EstudianteService;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/estudiante")
+@Tag(name = "Estudiante", description = "Gestión de estudiantes")
 public class EstudianteController {
 
     @Autowired
     private EstudianteService estudianteService;
 
+    @Operation(summary = "Crear un estudiante")
     @PostMapping
-    public Estudiante crearEstudiante(@RequestBody Estudiante estudiante) {
+    @ResponseStatus(HttpStatus.CREATED)
+    public EstudianteDTO crearEstudiante(@RequestBody EstudianteCreateDTO estudiante) {
         return estudianteService.crearEstudiante(estudiante);
     }
 
+    @Operation(summary = "Crear varios estudiantes")
     @PostMapping("/crearVarios")
-    List<Estudiante> crearVariosEstudiantes(@RequestBody List<Estudiante> listaEstudiantes) {
+    @ResponseStatus(HttpStatus.CREATED)
+    public List<EstudianteDTO> crearVariosEstudiantes(@RequestBody List<EstudianteCreateDTO> listaEstudiantes) {
         return estudianteService.crearVariosEstudiantes(listaEstudiantes);
-
     }
 
+    @Operation(summary = "Obtener todos los estudiantes")
     @GetMapping
-    public List<Estudiante> obtenerEstudiantes() {
+    public List<EstudianteDTO> obtenerEstudiantes() {
         return estudianteService.obtenerEstudiantes();
     }
 
+    @Operation(summary = "Buscar estudiante por documento")
     @GetMapping("/documento/{documentoID}")
-    public Estudiante findEstudianteByDocumento(@PathVariable String documentoID) {
-
+    public EstudianteDTO findEstudianteByDocumento(@PathVariable String documentoID) {
         return estudianteService.findEstudianteByDocumento(documentoID);
-
     }
 
+    @Operation(summary = "Buscar estudiantes por nombre")
     @GetMapping("/nombre/{nombreEstudiante}")
-
-    public List<Estudiante> findEstudianteByNombre(@PathVariable String nombreEstudiante) {
-
+    public List<EstudianteDTO> findEstudianteByNombre(@PathVariable String nombreEstudiante) {
         return estudianteService.findEstudianteByNombre(nombreEstudiante);
-
     }
 
+    @Operation(summary = "Obtener un estudiante por ID")
     @GetMapping("/{estudianteID}")
-
-    public Estudiante obtenerPorId(@PathVariable Long estudianteID) {
-
+    public EstudianteDTO obtenerPorId(@PathVariable Long estudianteID) {
         return estudianteService.obtenerPorId(estudianteID);
-
     }
 
-    // Endpoint para actualizar un estudiante (PUT)
+    @Operation(summary = "Actualizar un estudiante")
     @PutMapping("/{estudianteID}")
-    public Estudiante actualizarEstudiante(@PathVariable Long estudianteID, @RequestBody Estudiante estudiante) {
+    public EstudianteDTO actualizarEstudiante(@PathVariable Long estudianteID, @RequestBody EstudianteCreateDTO estudiante) {
         return estudianteService.actualizarEstudiante(estudianteID, estudiante);
     }
 
-    // Endpoint para eliminar un estudiante (DELETE)
+    @Operation(summary = "Eliminar un estudiante")
     @DeleteMapping("/{estudianteID}")
-    public String eliminarEstudiante(@PathVariable Long estudianteID) {
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void eliminarEstudiante(@PathVariable Long estudianteID) {
         estudianteService.eliminarEstudiante(estudianteID);
-        return "Estudiante con ID " + estudianteID + " y sus registros asociados han sido eliminados correctamente.";
     }
-
 }

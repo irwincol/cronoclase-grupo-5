@@ -1,79 +1,74 @@
 package com.grupo5.cronoclase.controller;
 
-
 import org.springframework.web.bind.annotation.RestController;
-
-import com.grupo5.cronoclase.model.entity.*;
-import com.grupo5.cronoclase.service.*;
-
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
-import java.util.*;
+import com.grupo5.cronoclase.dto.MatriculaDTO;
+import com.grupo5.cronoclase.dto.MatriculaCreateDTO;
+import com.grupo5.cronoclase.service.MatriculaService;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/matricula")
-
+@Tag(name = "Matrícula", description = "Gestión de matrículas")
 public class MatriculaController {
 
     @Autowired
-
     private MatriculaService matriculaService;
 
-    // 1. Crear una sola matrícula
+    @Operation(summary = "Crear una matrícula")
     @PostMapping
-    public Matricula crearMatricula(@RequestBody Matricula matricula) {
+    @ResponseStatus(HttpStatus.CREATED)
+    public MatriculaDTO crearMatricula(@RequestBody MatriculaCreateDTO matricula) {
         return matriculaService.crearMatricula(matricula);
     }
 
-    // 2. Crear varias matrículas al tiempo (POST masivo)
+    @Operation(summary = "Crear varias matrículas")
     @PostMapping("/crearVarios")
-    public List<Matricula> crearVarios(@RequestBody List<Matricula> matriculas) {
+    @ResponseStatus(HttpStatus.CREATED)
+    public List<MatriculaDTO> crearVarios(@RequestBody List<MatriculaCreateDTO> matriculas) {
         return matriculaService.crearVariasMatriculas(matriculas);
     }
 
-    // 3. Consultar todas las matrículas
+    @Operation(summary = "Obtener todas las matrículas")
     @GetMapping
-    public List<Matricula> obtenerTodas() {
+    public List<MatriculaDTO> obtenerTodas() {
         return matriculaService.obtenerTodas();
     }
 
-
-    // 4. Consultar por ID de Matrícula
+    @Operation(summary = "Obtener una matrícula por ID")
     @GetMapping("/{id}")
-    public Matricula obtenerPorId(@PathVariable Long id) {
+    public MatriculaDTO obtenerPorId(@PathVariable Long id) {
         return matriculaService.obtenerPorId(id);
     }
 
-    // 5. Consultar matrículas por un Grupo específico
+    @Operation(summary = "Obtener matrículas por grupo")
     @GetMapping("/grupo/{grupoId}")
-    public List<Matricula> obtenerPorGrupo(@PathVariable Long grupoId) {
+    public List<MatriculaDTO> obtenerPorGrupo(@PathVariable Long grupoId) {
         return matriculaService.obtenerPorGrupo(grupoId);
     }
 
-    // 6. Consultar matrículas por un Estudiante específico
+    @Operation(summary = "Obtener matrículas por estudiante")
     @GetMapping("/estudiante/{estudianteId}")
-    public List<Matricula> obtenerPorEstudiante(@PathVariable Long estudianteId) {
+    public List<MatriculaDTO> obtenerPorEstudiante(@PathVariable Long estudianteId) {
         return matriculaService.obtenerPorEstudiante(estudianteId);
     }
 
-    // 7. Actualizar una matrícula por ID
+    @Operation(summary = "Actualizar una matrícula")
     @PutMapping("/{id}")
-    public Matricula actualizarMatricula(@PathVariable Long id, @RequestBody Matricula matricula) {
+    public MatriculaDTO actualizarMatricula(@PathVariable Long id, @RequestBody MatriculaCreateDTO matricula) {
         return matriculaService.actualizarMatricula(id, matricula);
     }
 
-    // 8. Eliminar una matrícula por ID
+    @Operation(summary = "Eliminar una matrícula")
     @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void eliminarMatricula(@PathVariable Long id) {
         matriculaService.eliminarMatricula(id);
     }
-
-
 }

@@ -2,143 +2,165 @@ package com.grupo5.cronoclase.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import com.grupo5.cronoclase.repository.*;
 import com.grupo5.cronoclase.model.entity.*;
-import com.grupo5.cronoclase.model.enums.TipoEvaluacion;
 import com.grupo5.cronoclase.model.enums.EstadoEntrega;
-import org.springframework.transaction.annotation.Transactional;
+import com.grupo5.cronoclase.dto.*;
 
 import java.util.*;
+import java.util.stream.Collectors;
 import java.time.LocalDate;
 
 @Service
-
 public class EntregaService {
 
     @Autowired
     private EntregaRepository entregaRepository;
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // LÓGICA DE NEGOCIO: Determinar el estado de una entrega según fechas
-    // ─────────────────────────────────────────────────────────────────────────
+    @Autowired
+    private EstudianteRepository estudianteRepository;
 
-    /**
-     * Calcula y devuelve el EstadoEntrega correcto comparando:
-     *   - La fecha límite definida en la Evaluacion (fechaEntrega)
-     *   - La fecha real en que el estudiante hizo la entrega (fechaEntregaReal)
-     *
-     * Reglas:
-     *   · Si ya está CALIFICADO → no se cambia el estado.
-     *   · Si NO hay fecha real y el plazo AÚN NO venció → PENDIENTE
-     *   · Si NO hay fecha real y el plazo YA venció    → TARDE
-     *   · Si la fecha real es ≤ fecha límite           → ENTREGADO
-     *   · Si la fecha real es >  fecha límite           → TARDE
-     */
+    @Autowired
+    private EvaluacionRepository evaluacionRepository;
+
     public EstadoEntrega calcularEstado(Entrega entrega) {
-
-        // Si ya fue calificado, el estado no debe cambiar automáticamente
         if (entrega.getEstado() == EstadoEntrega.CALIFICADO) {
             return EstadoEntrega.CALIFICADO;
         }
 
-        LocalDate fechaLimite  = entrega.getEvaluacion().getFechaEntrega();
-        LocalDate fechaReal    = entrega.getFechaEntregaReal();
-        LocalDate hoy          = LocalDate.now();
+        LocalDate fechaLimite = entrega.getEvaluacion().getFechaEntrega();
+        LocalDate fechaReal = entrega.getFechaEntregaReal();
+        LocalDate hoy = LocalDate.now();
 
-        // Aún no se ha registrado una entrega real
         if (fechaReal == null) {
             return hoy.isAfter(fechaLimite)
-                    ? EstadoEntrega.TARDE      // el plazo ya venció y no entregó
-                    : EstadoEntrega.PENDIENTE; // aún está dentro del plazo
+                    ? EstadoEntrega.TARDE
+                    : EstadoEntrega.PENDIENTE;
         }
 
-        // Ya existe fecha real → comparar con la fecha límite
         return fechaReal.isAfter(fechaLimite)
-                ? EstadoEntrega.TARDE    // entregó después del plazo
-                : EstadoEntrega.ENTREGADO; // entregó a tiempo
+                ? EstadoEntrega.TARDE
+                : EstadoEntrega.ENTREGADO;
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
+    public EntregaDTO convertirADTO(Entrega entrega) {
+        return new EntregaDTO(
+            entrega.getId(),
+            entrega.getFechaEntregaReal(),
+            entrega.getEstado(),
+            entrega.getArchivoUrl(),
+            entrega.getComentario(),
+            entrega.getEstudiante() != null ? entrega.getEstudiante().getNombre() : null,
+            entrega.getEvaluacion() != null ? entrega.getEvaluacion().getTitulo() : null
+        );
+    }
 
-    // Servicio para crear una sola entrega
-    public Entrega crearEntrega(Entrega entrega) {
-        entrega.setId(null); // Ignoramos cualquier id del body para forzar INSERT
+    public Entrega convertirAEntidad(EntregaCreateDTO dto) {
+        Entrega entrega = new Entrega();
+        entrega.setFechaEntregaReal(dto.fechaEntregaReal());
+        entrega.setEstado(dto.estado());
+        entrega.setArchivoUrl(dto.archivoUrl());
+        entrega.setComentario(dto.comentario());
+        
+        if (dto.estudianteId() != null) {
+            Estudiante estudiante = estudianteRepository.findById(dto.estudianteId())
+                .orElseThrow(() -> new RuntimeException("Estudiante no encontrado con ID: " + dto.estudianteId()));
+            entrega.setEstudiante(estudiante);
+        }
+        
+        if (dto.evaluacionId() != null) {
+            Evaluacion evaluacion = evaluacionRepository.findById(dto.evaluacionId())
+                .orElseThrow(() -> new RuntimeException("Evaluación no encontrada con ID: " + dto.evaluacionId()));
+            entrega.setEvaluacion(evaluacion);
+        }
+        
+        return entrega;
+    }
+
+    @Transactional
+    public EntregaDTO crearEntrega(EntregaCreateDTO dto) {
+        Entrega entrega = convertirAEntidad(dto);
+        entrega.setId(null);
         entrega.setEstado(calcularEstado(entrega));
-        return entregaRepository.save(entrega);
+        Entrega guardada = entregaRepository.save(entrega);
+        return convertirADTO(guardada);
     }
 
-    // Servicio para crear varias entregas de una sola vez
-    public List<Entrega> crearVariasEntregas(List<Entrega> listaEntregas) {
-        // Usamos el método que ya existe en el repositorio por herencia
-        return entregaRepository.saveAll(listaEntregas);
+    @Transactional
+    public List<EntregaDTO> crearVariasEntregas(List<EntregaCreateDTO> dtos) {
+        List<Entrega> entregas = dtos.stream()
+            .map(dto -> {
+                Entrega entrega = convertirAEntidad(dto);
+                entrega.setEstado(calcularEstado(entrega));
+                return entrega;
+            })
+            .collect(Collectors.toList());
+            
+        List<Entrega> guardadas = entregaRepository.saveAll(entregas);
+        return guardadas.stream().map(this::convertirADTO).collect(Collectors.toList());
     }
 
-    // servicio para obtener todas las entregas
-    public List<Entrega> obtenerEntregas() {
-        return entregaRepository.findAll();
+    public List<EntregaDTO> obtenerEntregas() {
+        return entregaRepository.findAll().stream()
+            .map(this::convertirADTO)
+            .collect(Collectors.toList());
     }
 
-    // servicio para obtener entregas por el ID de un estudiante
-    public List<Entrega> findEntregaByEstudianteId(Long estudianteId) {
-        return entregaRepository.findByEstudianteId(estudianteId);
+    public List<EntregaDTO> findEntregaByEstudianteId(Long estudianteId) {
+        return entregaRepository.findByEstudianteId(estudianteId).stream()
+            .map(this::convertirADTO)
+            .collect(Collectors.toList());
     }
 
-    // servicio para obtener entregas por el ID de una evaluación
-    public List<Entrega> findEntregaByEvaluacionId(Long evaluacionId) {
-        return entregaRepository.findByEvaluacionId(evaluacionId);
+    public List<EntregaDTO> findEntregaByEvaluacionId(Long evaluacionId) {
+        return entregaRepository.findByEvaluacionId(evaluacionId).stream()
+            .map(this::convertirADTO)
+            .collect(Collectors.toList());
     }
 
-    // servicio para obtener entregas filtrando por el nombre del estudiante
-    public List<Entrega> findEntregaByNombreEstudiante(String nombreEstudiante) {
-        // Esto permite que el profesor busque "Perez" y vea todas las entregas de
-        // alumnos con ese apellido
-        return entregaRepository.findByEstudianteNombreContainingIgnoreCase(nombreEstudiante);
+    public List<EntregaDTO> findEntregaByNombreEstudiante(String nombreEstudiante) {
+        return entregaRepository.findByEstudianteNombreContainingIgnoreCase(nombreEstudiante).stream()
+            .map(this::convertirADTO)
+            .collect(Collectors.toList());
     }
 
-    public Entrega obtenerPorId(Long id) {
-        // servicio para obtener una entrega por su ID
-        // De esta forma se busca una entrega por su ID y se lanza un mensaje de error
-        // en caso de que no se encuentre
+    private Entrega buscarEntidadPorId(Long id) {
         return entregaRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Entrega no encontrada con ID: " + id));
     }
 
+    public EntregaDTO obtenerPorId(Long id) {
+        return convertirADTO(buscarEntidadPorId(id));
+    }
+
     @Transactional
-    public Entrega actualizarEntrega(Long id, Entrega entregaNuevosDatos) {
-        // 1. Buscamos la entrega actual (si no existe, lanza error)
-        Entrega entregaExistente = obtenerPorId(id);
+    public EntregaDTO actualizarEntrega(Long id, EntregaCreateDTO dto) {
+        Entrega entregaExistente = buscarEntidadPorId(id);
 
-        // 2. Actualizamos los campos
-        entregaExistente.setFechaEntregaReal(entregaNuevosDatos.getFechaEntregaReal());
-        entregaExistente.setArchivoUrl(entregaNuevosDatos.getArchivoUrl());
-        entregaExistente.setComentario(entregaNuevosDatos.getComentario());
+        entregaExistente.setFechaEntregaReal(dto.fechaEntregaReal());
+        entregaExistente.setArchivoUrl(dto.archivoUrl());
+        entregaExistente.setComentario(dto.comentario());
+        
+        // No permitimos cambiar la evaluación o estudiante en una actualización normal para mantener integridad, 
+        // a menos que sea un requerimiento específico.
 
-        // 3. Recalculamos el estado automáticamente según las fechas
-        //    (solo cambiamos si el profesor NO lo marcó como CALIFICADO previamente)
         if (entregaExistente.getEstado() != EstadoEntrega.CALIFICADO) {
             entregaExistente.setEstado(calcularEstado(entregaExistente));
         }
 
-        // 4. Guardamos los cambios
-        return entregaRepository.save(entregaExistente);
+        Entrega actualizada = entregaRepository.save(entregaExistente);
+        return convertirADTO(actualizada);
     }
 
-    /**
-     * Permite al profesor marcar una entrega como CALIFICADO explícitamente.
-     * Una vez calificado, el estado ya no cambia de forma automática.
-     */
     @Transactional
-    public Entrega calificarEntrega(Long id) {
-        Entrega entrega = obtenerPorId(id);
+    public EntregaDTO calificarEntrega(Long id) {
+        Entrega entrega = buscarEntidadPorId(id);
         entrega.setEstado(EstadoEntrega.CALIFICADO);
-        return entregaRepository.save(entrega);
+        Entrega calificada = entregaRepository.save(entrega);
+        return convertirADTO(calificada);
     }
 
-    /**
-     * Recalcula y actualiza el estado de TODAS las entregas PENDIENTES.
-     * Útil para ejecutar como tarea programada (@Scheduled) y detectar
-     * automáticamente las entregas que vencieron su fecha límite.
-     */
     @Transactional
     public void actualizarEstadosTodas() {
         List<Entrega> todas = entregaRepository.findAll();
@@ -152,11 +174,7 @@ public class EntregaService {
 
     @Transactional
     public void eliminarEntrega(Long id) {
-        // Verificamos existencia antes de borrar
-        obtenerPorId(id);
+        buscarEntidadPorId(id);
         entregaRepository.deleteById(id);
     }
-
-    
-
 }

@@ -1,76 +1,75 @@
 package com.grupo5.cronoclase.controller;
 
-
 import org.springframework.web.bind.annotation.RestController;
-
-import com.grupo5.cronoclase.model.entity.*;
-import com.grupo5.cronoclase.model.enums.Jornada;
-import com.grupo5.cronoclase.service.*;
-
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
-import java.util.*;
+import com.grupo5.cronoclase.dto.GrupoDTO;
+import com.grupo5.cronoclase.dto.GrupoCreateDTO;
+import com.grupo5.cronoclase.model.enums.Jornada;
+import com.grupo5.cronoclase.service.GrupoService;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/grupo")
-
+@Tag(name = "Grupo", description = "Gestión de grupos")
 public class GrupoController {
 
     @Autowired
     private GrupoService grupoService;
 
+    @Operation(summary = "Crear un grupo")
     @PostMapping
-    public Grupo crearGrupo(@RequestBody Grupo grupo) {
+    @ResponseStatus(HttpStatus.CREATED)
+    public GrupoDTO crearGrupo(@RequestBody GrupoCreateDTO grupo) {
         return grupoService.crearGrupo(grupo);
     }
 
+    @Operation(summary = "Crear varios grupos")
     @PostMapping("/crearVarios")
-    public List<Grupo> crearVariosGrupos(@RequestBody List<Grupo> grupos) {
+    @ResponseStatus(HttpStatus.CREATED)
+    public List<GrupoDTO> crearVariosGrupos(@RequestBody List<GrupoCreateDTO> grupos) {
         return grupoService.crearVariosGrupos(grupos);
     }
 
-
+    @Operation(summary = "Obtener todos los grupos")
     @GetMapping
-    public List<Grupo> obtenerTodos() {
+    public List<GrupoDTO> obtenerTodos() {
         return grupoService.obtenerTodos();
     }
 
+    @Operation(summary = "Obtener un grupo por ID")
     @GetMapping("/{id}")
-    public Grupo obtenerPorId(@PathVariable Long id) {
+    public GrupoDTO obtenerPorId(@PathVariable Long id) {
         return grupoService.obtenerPorId(id);
     }
 
-
+    @Operation(summary = "Buscar grupos por nombre")
     @GetMapping("/buscar/{nombre}")
-    public List<Grupo> obtenerPorNombre(@PathVariable String nombre) {
+    public List<GrupoDTO> obtenerPorNombre(@PathVariable String nombre) {
         return grupoService.obtenerPorNombre(nombre);
     }
 
+    @Operation(summary = "Buscar grupos por jornada")
     @GetMapping("/jornada/{jornada}")
-    public List<Grupo> obtenerPorJornada(@PathVariable Jornada jornada) {
+    public List<GrupoDTO> obtenerPorJornada(@PathVariable Jornada jornada) {
         return grupoService.obtenerPorJornada(jornada);
     }
 
-
+    @Operation(summary = "Actualizar un grupo")
     @PutMapping("/{id}")
-    public Grupo actualizarGrupo(@PathVariable Long id, @RequestBody Grupo grupo) {
+    public GrupoDTO actualizarGrupo(@PathVariable Long id, @RequestBody GrupoCreateDTO grupo) {
         return grupoService.actualizarGrupo(id, grupo);
     }
 
+    @Operation(summary = "Eliminar un grupo")
     @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void eliminarGrupo(@PathVariable Long id) {
         grupoService.eliminarGrupo(id);
     }
-
-
-
-
-
 }
