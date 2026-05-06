@@ -1,117 +1,79 @@
 package com.grupo5.cronoclase.service;
 
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import com.grupo5.cronoclase.repository.*;
 import com.grupo5.cronoclase.model.entity.*;
-import com.grupo5.cronoclase.dto.*;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
+
 public class EvaluacionService {
 
     @Autowired
     private EvaluacionRepository evaluacionRepository;
 
-    @Autowired
-    private GrupoRepository grupoRepository;
 
-    public EvaluacionDTO convertirADTO(Evaluacion evaluacion) {
-        return new EvaluacionDTO(
-            evaluacion.getId(),
-            evaluacion.getTitulo(),
-            evaluacion.getTipo(),
-            evaluacion.getPorcentaje(),
-            evaluacion.getFechaEntrega(),
-            evaluacion.getGrupo() != null ? evaluacion.getGrupo().getNombre() : null
-        );
+    public Evaluacion crearEvaluacion(Evaluacion evaluacion) {
+        evaluacion.setId(null); // Ignoramos cualquier id del body para forzar INSERT
+        return evaluacionRepository.save(evaluacion);
     }
 
-    public Evaluacion convertirAEntidad(EvaluacionCreateDTO dto) {
-        Evaluacion evaluacion = new Evaluacion();
-        evaluacion.setTitulo(dto.titulo());
-        evaluacion.setTipo(dto.tipo());
-        evaluacion.setPorcentaje(dto.porcentaje());
-        evaluacion.setFechaEntrega(dto.fechaEntrega());
-        
-        if (dto.grupoId() != null) {
-            Grupo grupo = grupoRepository.findById(dto.grupoId())
-                .orElseThrow(() -> new RuntimeException("Grupo no encontrado con ID: " + dto.grupoId()));
-            evaluacion.setGrupo(grupo);
-        }
-        
-        return evaluacion;
+    // Servicio para crear varias evaluaciones de una sola vez
+    public List<Evaluacion> crearVariasEvaluaciones(List<Evaluacion> evaluaciones) {
+        // Usamos el método que ya existe en el repositorio por herencia
+        return evaluacionRepository.saveAll(evaluaciones);
     }
 
-    @Transactional
-    public EvaluacionDTO crearEvaluacion(EvaluacionCreateDTO dto) {
-        Evaluacion evaluacion = convertirAEntidad(dto);
-        evaluacion.setId(null);
-        Evaluacion guardada = evaluacionRepository.save(evaluacion);
-        return convertirADTO(guardada);
+    // servicio para obtener todas las evaluaciones
+    public List<Evaluacion> obtenerEvaluaciones() {
+        return evaluacionRepository.findAll();
     }
 
-    @Transactional
-    public List<EvaluacionDTO> crearVariasEvaluaciones(List<EvaluacionCreateDTO> dtos) {
-        List<Evaluacion> evaluaciones = dtos.stream()
-            .map(this::convertirAEntidad)
-            .collect(Collectors.toList());
-        List<Evaluacion> guardadas = evaluacionRepository.saveAll(evaluaciones);
-        return guardadas.stream().map(this::convertirADTO).collect(Collectors.toList());
+    // servicio para obtener evaluaciones por el ID de un grupo
+    public List<Evaluacion> findEvaluacionByGrupoId(Long grupoId) {
+        return evaluacionRepository.findByGrupoId(grupoId);
     }
 
-    public List<EvaluacionDTO> obtenerEvaluaciones() {
-        return evaluacionRepository.findAll().stream()
-            .map(this::convertirADTO)
-            .collect(Collectors.toList());
+
+     // servicio para obtener evaluaciones por el nombre de un grupo
+    public List<Evaluacion> findEvaluacionByNombreGrupo(String grupoNombre) {
+        return evaluacionRepository.findByGrupoNombre(grupoNombre);
     }
 
-    public List<EvaluacionDTO> findEvaluacionByGrupoId(Long grupoId) {
-        return evaluacionRepository.findByGrupoId(grupoId).stream()
-            .map(this::convertirADTO)
-            .collect(Collectors.toList());
-    }
 
-    public List<EvaluacionDTO> findEvaluacionByNombreGrupo(String grupoNombre) {
-        return evaluacionRepository.findByGrupoNombre(grupoNombre).stream()
-            .map(this::convertirADTO)
-            .collect(Collectors.toList());
-    }
 
-    private Evaluacion buscarEntidadPorId(Long id) {
+    public Evaluacion obtenerPorId(Long id) {
+        // servicio para obtener una evaluacion por su ID
+        // De esta forma se busca una evaluacion por su ID y se lanza un mensaje de error
+        // en caso de que no se encuentre
         return evaluacionRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Evaluación no encontrada con ID: " + id));
     }
 
-    public EvaluacionDTO obtenerPorId(Long id) {
-        return convertirADTO(buscarEntidadPorId(id));
-    }
-
     @Transactional
-    public EvaluacionDTO actualizarEvaluacion(Long id, EvaluacionCreateDTO datosNuevos) {
-        Evaluacion evaluacionExistente = buscarEntidadPorId(id);
+    public Evaluacion actualizarEvaluacion(Long id, Evaluacion datosNuevos) {
+        Evaluacion evaluacionExistente = obtenerPorId(id);
 
-        evaluacionExistente.setTitulo(datosNuevos.titulo());
-        evaluacionExistente.setTipo(datosNuevos.tipo());
-        evaluacionExistente.setPorcentaje(datosNuevos.porcentaje());
-        evaluacionExistente.setFechaEntrega(datosNuevos.fechaEntrega());
-        
-        if (datosNuevos.grupoId() != null) {
-            Grupo grupo = grupoRepository.findById(datosNuevos.grupoId())
-                .orElseThrow(() -> new RuntimeException("Grupo no encontrado con ID: " + datosNuevos.grupoId()));
-            evaluacionExistente.setGrupo(grupo);
-        }
+        // Actualizamos los campos de la entidad
+        evaluacionExistente.setTitulo(datosNuevos.getTitulo());
+        evaluacionExistente.setTipo(datosNuevos.getTipo());
+        evaluacionExistente.setPorcentaje(datosNuevos.getPorcentaje());
+        evaluacionExistente.setFechaEntrega(datosNuevos.getFechaEntrega());
+        // El grupo normalmente no se cambia, pero si lo necesitas, agrégalo aquí
 
-        Evaluacion actualizada = evaluacionRepository.save(evaluacionExistente);
-        return convertirADTO(actualizada);
+        return evaluacionRepository.save(evaluacionExistente);
     }
 
     @Transactional
     public void eliminarEvaluacion(Long id) {
-        buscarEntidadPorId(id);
+        obtenerPorId(id); // Validamos existencia
         evaluacionRepository.deleteById(id);
     }
+
+
+
 }
