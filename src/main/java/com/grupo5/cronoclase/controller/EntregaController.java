@@ -1,94 +1,105 @@
 package com.grupo5.cronoclase.controller;
 
+
+
+
+
 import org.springframework.web.bind.annotation.RestController;
+
+import com.grupo5.cronoclase.model.entity.*;
+import com.grupo5.cronoclase.model.enums.TipoEvaluacion;
+import com.grupo5.cronoclase.service.*;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.http.ResponseEntity;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 
-import com.grupo5.cronoclase.dto.EntregaDTO;
-import com.grupo5.cronoclase.dto.EntregaCreateDTO;
-import com.grupo5.cronoclase.service.EntregaService;
-
-import java.util.List;
+import java.util.*;
 
 @RestController
 @RequestMapping("/api/entrega")
-@Tag(name = "Entrega", description = "Gestión de entregas")
+
 public class EntregaController {
 
     @Autowired
     private EntregaService entregaService;
 
-    @Operation(summary = "Crear una entrega")
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public EntregaDTO crearEntrega(@RequestBody EntregaCreateDTO entrega) {
+    public Entrega crearEntrega(@RequestBody Entrega entrega) {
         return entregaService.crearEntrega(entrega);
     }
 
-    @Operation(summary = "Crear varias entregas")
     @PostMapping("/crearVarios")
-    @ResponseStatus(HttpStatus.CREATED)
-    public List<EntregaDTO> crearVariasEntregas(@RequestBody List<EntregaCreateDTO> listaEntregas) {
+    public List<Entrega> crearVariasEntregas(@RequestBody List<Entrega> listaEntregas) {
         return entregaService.crearVariasEntregas(listaEntregas);
     }
 
-    @Operation(summary = "Obtener todas las entregas")
     @GetMapping
-    public List<EntregaDTO> obtenerEntregas() {
+    public List<Entrega> obtenerEntregas() {
         return entregaService.obtenerEntregas();
     }
 
-    @Operation(summary = "Obtener entregas por estudiante")
+
     @GetMapping("/estudianteID/{estudianteID}")
-    public List<EntregaDTO> findEntregaByEstudianteId(@PathVariable Long estudianteID) {
+    public List<Entrega> findEntregaByEstudianteId(@PathVariable Long estudianteID) {
         return entregaService.findEntregaByEstudianteId(estudianteID);
     }
 
-    @Operation(summary = "Obtener entregas por evaluación")
+
     @GetMapping("/evaluacionID/{evaluacionID}")
-    public List<EntregaDTO> findEntregaByEvaluacionId(@PathVariable Long evaluacionID) {
+    public List<Entrega> findEntregaByEvaluacionId(@PathVariable Long evaluacionID) {
         return entregaService.findEntregaByEvaluacionId(evaluacionID);
     }
 
-    @Operation(summary = "Buscar entregas por nombre de estudiante")
+
     @GetMapping("/nombreEstudiante/{nombreEstudiante}")
-    public List<EntregaDTO> findEntregaByNombreEstudiante(@PathVariable String nombreEstudiante) {
+    public List<Entrega> findEntregaByNombreEstudiante(@PathVariable String nombreEstudiante) {
         return entregaService.findEntregaByNombreEstudiante(nombreEstudiante);
     }
 
-    @Operation(summary = "Obtener una entrega por ID")
+   
+
     @GetMapping("/{entregaID}")
-    public EntregaDTO obtenerPorId(@PathVariable Long entregaID) {
+    public Entrega obtenerPorId(@PathVariable Long entregaID) {
         return entregaService.obtenerPorId(entregaID);
     }
 
-    @Operation(summary = "Actualizar una entrega")
+
+    // Endpoint para actualizar una entrega (PUT)
     @PutMapping("/{id}")
-    public EntregaDTO actualizarEntrega(@PathVariable Long id, @RequestBody EntregaCreateDTO entrega) {
+    public Entrega actualizarEntrega(@PathVariable Long id, @RequestBody Entrega entrega) {
         return entregaService.actualizarEntrega(id, entrega);
     }
 
-    @Operation(summary = "Calificar una entrega")
+    // Endpoint para marcar una entrega como CALIFICADO (PATCH)
     @PatchMapping("/{id}/calificar")
-    public EntregaDTO calificarEntrega(@PathVariable Long id) {
+    public Entrega calificarEntrega(@PathVariable Long id) {
         return entregaService.calificarEntrega(id);
     }
 
-    @Operation(summary = "Actualizar el estado de todas las entregas")
+    // Endpoint para recalcular el estado de todas las entregas PENDIENTES (PUT)
     @PutMapping("/actualizar-estados")
     public ResponseEntity<String> actualizarEstadosTodas() {
         entregaService.actualizarEstadosTodas();
         return ResponseEntity.ok("Estados actualizados correctamente.");
     }
 
-    @Operation(summary = "Eliminar una entrega")
+    // Endpoint para eliminar una entrega (DELETE)
     @DeleteMapping("/{id}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void eliminarEntrega(@PathVariable Long id) {
+    public String eliminarEntrega(@PathVariable Long id) {
         entregaService.eliminarEntrega(id);
+        return "Entrega con ID " + id + " eliminada exitosamente.";
     }
+
+
+
+
 }

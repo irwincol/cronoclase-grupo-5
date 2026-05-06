@@ -6,126 +6,72 @@ import org.springframework.transaction.annotation.Transactional;
 import com.grupo5.cronoclase.repository.*;
 import com.grupo5.cronoclase.model.entity.*;
 import com.grupo5.cronoclase.model.enums.Jornada;
-import com.grupo5.cronoclase.dto.*;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
+
 public class GrupoService {
+
 
     @Autowired
     private GrupoRepository grupoRepository;
 
-    @Autowired
-    private CursoRepository cursoRepository;
-
-    @Autowired
-    private ProfesorRepository profesorRepository;
-
-    public GrupoDTO convertirADTO(Grupo grupo) {
-        return new GrupoDTO(
-            grupo.getId(),
-            grupo.getNombre(),
-            grupo.getDia(),
-            grupo.getJornada(),
-            grupo.getCurso() != null ? grupo.getCurso().getNombre() : null,
-            grupo.getProfesor() != null ? grupo.getProfesor().getNombre() : null
-        );
+    public Grupo crearGrupo(Grupo grupo) {
+        grupo.setId(null); // Ignoramos cualquier id del body para forzar INSERT
+        return grupoRepository.save(grupo);
     }
 
-    public Grupo convertirAEntidad(GrupoCreateDTO dto) {
-        Grupo grupo = new Grupo();
-        grupo.setNombre(dto.nombre());
-        grupo.setDia(dto.dia());
-        grupo.setJornada(dto.jornada());
-        
-        if (dto.cursoId() != null) {
-            Curso curso = cursoRepository.findById(dto.cursoId())
-                .orElseThrow(() -> new RuntimeException("Curso no encontrado con ID: " + dto.cursoId()));
-            grupo.setCurso(curso);
-        }
-        
-        if (dto.profesorId() != null) {
-            Profesor profesor = profesorRepository.findById(dto.profesorId())
-                .orElseThrow(() -> new RuntimeException("Profesor no encontrado con ID: " + dto.profesorId()));
-            grupo.setProfesor(profesor);
-        }
-        
-        return grupo;
+    public List<Grupo> crearVariosGrupos(List<Grupo> grupos) {
+        return grupoRepository.saveAll(grupos);
     }
 
-    @Transactional
-    public GrupoDTO crearGrupo(GrupoCreateDTO dto) {
-        Grupo grupo = convertirAEntidad(dto);
-        grupo.setId(null);
-        Grupo guardado = grupoRepository.save(grupo);
-        return convertirADTO(guardado);
+
+    public List<Grupo> obtenerTodos() {
+        return grupoRepository.findAll();
     }
 
-    @Transactional
-    public List<GrupoDTO> crearVariosGrupos(List<GrupoCreateDTO> dtos) {
-        List<Grupo> grupos = dtos.stream()
-            .map(this::convertirAEntidad)
-            .collect(Collectors.toList());
-        List<Grupo> guardados = grupoRepository.saveAll(grupos);
-        return guardados.stream().map(this::convertirADTO).collect(Collectors.toList());
-    }
-
-    public List<GrupoDTO> obtenerTodos() {
-        return grupoRepository.findAll().stream()
-            .map(this::convertirADTO)
-            .collect(Collectors.toList());
-    }
-
-    private Grupo buscarEntidadPorId(Long id) {
+    public Grupo obtenerPorId(Long id) {
         return grupoRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Grupo no encontrado con ID: " + id));
     }
 
-    public GrupoDTO obtenerPorId(Long id) {
-        return convertirADTO(buscarEntidadPorId(id));
+    // 5. Buscar por Nombre
+    public List<Grupo> obtenerPorNombre(String nombre) {
+        return grupoRepository.findByNombre(nombre);
     }
 
-    public List<GrupoDTO> obtenerPorNombre(String nombre) {
-        return grupoRepository.findByNombre(nombre).stream()
-            .map(this::convertirADTO)
-            .collect(Collectors.toList());
+    // 6. Buscar por Jornada
+    public List<Grupo> obtenerPorJornada(Jornada jornada) {
+        return grupoRepository.findByJornada(jornada);
     }
 
-    public List<GrupoDTO> obtenerPorJornada(Jornada jornada) {
-        return grupoRepository.findByJornada(jornada).stream()
-            .map(this::convertirADTO)
-            .collect(Collectors.toList());
-    }
-
+    // --- ACTUALIZAR GRUPO ---
     @Transactional
-    public GrupoDTO actualizarGrupo(Long id, GrupoCreateDTO datosNuevos) {
-        Grupo grupoExistente = buscarEntidadPorId(id);
+    public Grupo actualizarGrupo(Long id, Grupo datosNuevos) {
+        // 1. Buscamos el grupo actual (si no existe, lanza el error ya programado)
+        Grupo grupoExistente = obtenerPorId(id);
 
-        grupoExistente.setNombre(datosNuevos.nombre());
-        grupoExistente.setDia(datosNuevos.dia());
-        grupoExistente.setJornada(datosNuevos.jornada());
-        
-        if (datosNuevos.cursoId() != null) {
-            Curso curso = cursoRepository.findById(datosNuevos.cursoId())
-                .orElseThrow(() -> new RuntimeException("Curso no encontrado con ID: " + datosNuevos.cursoId()));
-            grupoExistente.setCurso(curso);
-        }
-        
-        if (datosNuevos.profesorId() != null) {
-            Profesor profesor = profesorRepository.findById(datosNuevos.profesorId())
-                .orElseThrow(() -> new RuntimeException("Profesor no encontrado con ID: " + datosNuevos.profesorId()));
-            grupoExistente.setProfesor(profesor);
-        }
+        // 2. Seteamos los nuevos datos
+        grupoExistente.setNombre(datosNuevos.getNombre());
+        grupoExistente.setDia(datosNuevos.getDia());
+        grupoExistente.setJornada(datosNuevos.getJornada());
+        grupoExistente.setCurso(datosNuevos.getCurso());
+        grupoExistente.setProfesor(datosNuevos.getProfesor());
 
-        Grupo actualizado = grupoRepository.save(grupoExistente);
-        return convertirADTO(actualizado);
+        // 3. Guardamos (JPA hace el UPDATE automáticamente)
+        return grupoRepository.save(grupoExistente);
     }
 
+    // --- ELIMINAR GRUPO ---
     @Transactional
     public void eliminarGrupo(Long id) {
-        buscarEntidadPorId(id);
+        // Validamos que existe antes de intentar borrar
+        obtenerPorId(id);
+
+        // Al ejecutar esto, por el CascadeType.ALL que tienes en la Entidad,
+        // se borrarán también sus MATRICULAS y EVALUACIONES.
         grupoRepository.deleteById(id);
     }
+
 }

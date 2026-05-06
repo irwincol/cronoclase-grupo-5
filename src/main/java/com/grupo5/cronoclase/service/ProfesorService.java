@@ -4,105 +4,107 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.grupo5.cronoclase.repository.*;
+import com.grupo5.cronoclase.dtos.*;
 import com.grupo5.cronoclase.model.entity.*;
-import com.grupo5.cronoclase.dto.*;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
+
 public class ProfesorService {
 
     @Autowired
     private ProfesorRepository profesorRepository;
 
-    public ProfesorDTO convertirADTO(Profesor profesor) {
-        return new ProfesorDTO(
-            profesor.getId(),
-            profesor.getNombre(),
-            profesor.getEmail(),
-            profesor.getActivo()
-        );
-    }
+    // Servicio para crear un solo profesor
 
-    public Profesor convertirAEntidad(ProfesorCreateDTO dto) {
-        Profesor profesor = new Profesor();
-        profesor.setNombre(dto.nombre());
-        profesor.setEmail(dto.email());
-        profesor.setDocumentoID(dto.documentoID());
-        // El activo se maneja en los métodos de creación o puede venir en el DTO
-        profesor.setActivo(dto.activo() != null ? dto.activo() : true);
-        return profesor;
-    }
-
-    @Transactional
-    public ProfesorDTO crearProfesor(ProfesorCreateDTO dto) {
-        Profesor profesor = convertirAEntidad(dto);
+    public Profesor crearProfesor(Profesor profesor) {
+        // Ignoramos cualquier id que venga en el body para forzar un INSERT
         profesor.setId(null);
-        if (profesor.getActivo() == null) {
-            profesor.setActivo(true);
-        }
-        Profesor guardado = profesorRepository.save(profesor);
-        return convertirADTO(guardado);
+        profesor.setActivo(true);
+        return profesorRepository.save(profesor);
     }
 
-    @Transactional
-    public List<ProfesorDTO> crearVariosProfesores(List<ProfesorCreateDTO> dtos) {
-        List<Profesor> profesores = dtos.stream()
-            .map(this::convertirAEntidad)
-            .collect(Collectors.toList());
-            
+    // Servicio para crear varios profesores de una sola vez
+
+    public List<Profesor> crearVariosProfesores(List<Profesor> profesores) {
+
+        // se hace eso para poder setear el estado como activo por defecto
+
         profesores.forEach(p -> {
             if (p.getActivo() == null)
                 p.setActivo(true);
         });
-        List<Profesor> guardados = profesorRepository.saveAll(profesores);
-        return guardados.stream().map(this::convertirADTO).collect(Collectors.toList());
+        return profesorRepository.saveAll(profesores);
+
     }
 
-    public List<ProfesorDTO> obtenerProfesores() {
-        return profesorRepository.findAll().stream()
-            .map(this::convertirADTO)
-            .collect(Collectors.toList());
+    // servicio para obtener todos los profesores
+
+    public List<Profesor> obtenerProfesores() {
+        return profesorRepository.findAll();
     }
 
-    public List<ProfesorDTO> findProfesorByNombre(String nombreProfesor) {
+    // Servicio para encotrar un profesor por su nombre
+
+    public List<Profesor> findProfesorByNombre(String nombreProfesor) {
+
         List<Profesor> profesorEncontrado = profesorRepository.findByNombre(nombreProfesor);
+
         if (profesorEncontrado.isEmpty()) {
-            throw new RuntimeException("Profesor no encontrado, verifique el nombre ingresado");
-        } else {
-            return profesorEncontrado.stream().map(this::convertirADTO).collect(Collectors.toList());
+
+            throw new RuntimeException("Porfesor no encontrado, verifique el nombre ingresado");
         }
+
+        else {
+            return profesorEncontrado;
+        }
+
     }
 
-    private Profesor buscarEntidadPorId(Long id) {
+
+    public ProfesorResponseDTO obtenerPorId(Long id){
+
+        Profesor profesorEntity =  profesorRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Profesor no encontrado con ID: " + id));
+  
+        ProfesorResponseDTO profesorDto = new ProfesorResponseDTO();
+        profesorDto.setNombre(profesorEntity.getNombre());
+        profesorDto.setEmail(profesorEntity.getEmail());
+        return profesorDto;
+
+    }
+
+    public Profesor obtenerPorIdNoDTO(Long id) {
+        // De esta forma se busca un profesor por su ID. y se lanza un mensaje de error en 
+        //caso de que no se encuentre
         return profesorRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Profesor no encontrado con ID: " + id));
     }
 
-    public ProfesorDTO obtenerPorId(Long id) {
-        Profesor profesor = buscarEntidadPorId(id);
-        return convertirADTO(profesor);
-    }
-
+    // --- ACTUALIZAR PROFESOR ---
     @Transactional
-    public ProfesorDTO actualizarProfesor(Long id, ProfesorCreateDTO datosNuevos) {
-        Profesor profesorExistente = buscarEntidadPorId(id);
+    public Profesor actualizarProfesor(Long id, Profesor datosNuevos) {
+        // 1. Buscamos el profesor actual (si no existe, lanza el error ya programado)
+        Profesor profesorExistente = obtenerPorIdNoDTO(id);
 
-        profesorExistente.setNombre(datosNuevos.nombre());
-        profesorExistente.setEmail(datosNuevos.email());
-        profesorExistente.setDocumentoID(datosNuevos.documentoID());
-        if (datosNuevos.activo() != null) {
-            profesorExistente.setActivo(datosNuevos.activo());
-        }
+        // 2. Seteamos los nuevos datos
+        profesorExistente.setNombre(datosNuevos.getNombre());
+        profesorExistente.setEmail(datosNuevos.getEmail());
+        profesorExistente.setDocumentoID(datosNuevos.getDocumentoID());
+        profesorExistente.setActivo(datosNuevos.getActivo());
 
-        Profesor actualizado = profesorRepository.save(profesorExistente);
-        return convertirADTO(actualizado);
+        // 3. Guardamos (JPA hace el UPDATE automáticamente)
+        return profesorRepository.save(profesorExistente);
     }
 
+    // --- ELIMINAR PROFESOR ---
     @Transactional
     public void eliminarProfesor(Long id) {
-        buscarEntidadPorId(id);
+        // Validamos que existe antes de intentar borrar
+        obtenerPorId(id);
+
         profesorRepository.deleteById(id);
     }
+
 }
