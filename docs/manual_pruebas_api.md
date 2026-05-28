@@ -87,7 +87,7 @@ Crea al estudiante que participará en las clases y enviará las tareas.
 
 ## 🟡 FASE 2: Creación de Grupos e Inscripción Directa
 
-En esta fase vinculamos a los profesores y a los estudiantes a través del objeto `Grupo` (reemplazando el antiguo modelo de `Curso` y `Matricula`).
+En esta fase vinculamos a los profesores y a los estudiantes a través del objeto `Grupo`.
 
 ### 4. Crear un Grupo
 Crea la clase asignada al profesor. El nombre del curso se integra directamente en el grupo.
