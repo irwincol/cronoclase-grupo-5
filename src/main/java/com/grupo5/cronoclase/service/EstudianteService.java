@@ -65,8 +65,17 @@ public class EstudianteService {
 
     @Transactional
     public void eliminarEstudiante(Long id) {
-        obtenerPorId(id);
-        estudianteRepository.deleteById(id);
+        Estudiante estudiante = obtenerPorId(id);
+        
+        // Desasociar al estudiante de todos sus grupos para limpiar la tabla intermedia grupo_estudiante
+        if (estudiante.getGrupos() != null) {
+            for (Grupo g : estudiante.getGrupos()) {
+                g.getEstudiantes().remove(estudiante);
+            }
+            estudiante.getGrupos().clear();
+        }
+        
+        estudianteRepository.delete(estudiante);
     }
 
     // ─── AUTENTICACIÓN ───────────────────────────────────────────────────────
